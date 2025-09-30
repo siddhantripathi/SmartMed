@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidMedicationData() {
+      return request.resource.data.keys().hasAll(['name', 'dosage', 'frequency', 'isActive']) &&
+             request.resource.data.name is string &&
+             request.resource.data.dosage is string &&
+             request.resource.data.frequency is string &&
+             request.resource.data.isActive is bool;
+    }
+
+    function isValidSupplementData() {
+      return request.resource.data.keys().hasAll(['name', 'dosage', 'frequency', 'category', 'isActive']) &&
+             request.resource.data.name is string &&
+             request.resource.data.dosage is string &&
+             request.resource.data.frequency is string &&
+             request.resource.data.category is string &&
+             request.resource.data.isActive is bool;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Users can read and write their own data
+      allow read, write: if isOwner(userId);
+
+      // Medications subcollection
+      match /medications/{medicationId} {
+        allow read, write: if isOwner(userId) && isValidMedicationData();
+        allow delete: if isOwner(userId);
+      }
+
+      // Supplements subcollection
+      match /supplements/{supplementId} {
+        allow read, write: if isOwner(userId) && isValidSupplementData();
+        allow delete: if isOwner(userId);
+      }
+
+      // Alerts subcollection
+      match /alerts/{alertId} {
+        allow read, write: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    // Interactions collection (global read access for medical data)
+    match /interactions/{interactionId} {
+      allow read: if isAuthenticated();
+      // Only admins can write interaction data
+      allow write: if request.auth.token.admin == true;
+    }
+
+    // OCR results (temporary storage)
+    match /ocrResults/{sessionId} {
+      allow read, write: if isAuthenticated();
+      // Auto-delete after 24 hours
+      allow delete: if request.time < resource.data.expiresAt;
+    }
+
+    // Global collections (admin only)
+    match /globalSettings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if request.auth.token.admin == true;
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "smartmed-dev",
+    "production": "smartmed-prod"
+  }
+}

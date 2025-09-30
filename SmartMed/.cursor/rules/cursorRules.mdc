@@ -1,0 +1,459 @@
+---
+description: Overall structure and routing problems can often be fixed by looking at architechture 
+alwaysApply: false
+---
+# SmartMed - Smart Medication Interaction Checker
+
+## Project Overview
+SmartMed is a comprehensive mobile application that provides real-time medication and supplement interaction checking with AI-powered natural language processing, OCR capabilities, and personalized health alerts. The app targets both Google Play Store and Apple App Store deployment.
+
+## Core Features
+- **Real-time Interaction Checking**: Query multiple medical APIs (FDA, RxNorm, NIH) for drug-supplement interactions
+- **AI-Powered NLP**: Natural language input processing ("Can I take fish oil with my blood thinner?")
+- **OCR Scanning**: Scan prescription bottles and supplement labels for automatic data entry
+- **Personalized Alerts**: Custom notifications based on user's complete medication/supplement profile
+- **Export Reports**: Generate reports for doctor visits and healthcare consultations
+- **Comprehensive Database**: Natural supplements, vitamins, herbs, and prescription medications
+
+## Technology Stack
+
+### Mobile Frontend
+- **Framework**: React Native (cross-platform for iOS and Android)
+- **State Management**: Redux Toolkit with RTK Query
+- **Navigation**: React Navigation v6
+- **UI Components**: React Native Elements or NativeBase
+- **Camera/OCR**: react-native-vision-camera + react-native-text-recognition
+
+### Backend Services
+- **Runtime**: Node.js with Express.js or Firebase Cloud Functions
+- **API Orchestration**: n8n for workflow automation and medical API integration
+- **Authentication**: Firebase Authentication with Google, email/password, and phone auth
+- **File Storage**: Firebase Storage (Google Cloud Storage backend)
+- **Image Processing**: Sharp.js for image optimization in Cloud Functions
+
+### Database
+- **Primary Database**: Firestore (NoSQL) for flexible document-based data storage
+- **Real-time Updates**: Firestore real-time listeners for live data synchronization
+- **Caching**: Firebase Hosting CDN and Firestore offline persistence
+- **Vector Database**: Vertex AI Vector Search for semantic search of medical information
+
+### AI/ML Services
+- **NLP Processing**: Vertex AI PaLM 2 or OpenAI GPT-4 via Google Cloud
+- **OCR Engine**: Google Cloud Vision API
+- **Embedding Models**: Vertex AI Text Embeddings for semantic search
+- **ML Pipeline**: Vertex AI Pipelines for model training and deployment
+
+### Infrastructure
+- **Cloud Platform**: Google Cloud Platform (GCP)
+- **Serverless Functions**: Firebase Cloud Functions for backend logic
+- **Container Orchestration**: Google Cloud Run for containerized services
+- **CI/CD**: Google Cloud Build with GitHub integration
+- **Monitoring**: Google Cloud Monitoring, Firebase Crashlytics, and Google Analytics
+
+## System Architecture
+
+### Mobile App Architecture
+```
+┌─────────────────────────────────────┐
+│           Mobile App (React Native) │
+├─────────────────────────────────────┤
+│ • Camera/OCR Module                 │
+│ • Medication Management             │
+│ • Interaction Checker               │
+│ • Alert System                      │
+│ • Report Generator                  │
+│ • User Profile Management           │
+└─────────────────────────────────────┘
+                    │
+                    │ HTTPS/REST API
+                    ▼
+┌─────────────────────────────────────┐
+│         API Gateway                 │
+├─────────────────────────────────────┤
+│ • Authentication                    │
+│ • Rate Limiting                     │
+│ • Request Validation                │
+│ • Response Caching                  │
+└─────────────────────────────────────┘
+```
+
+### Firebase/GCP Backend Architecture
+```
+┌─────────────────────────────────────┐
+│        Firebase Cloud Functions     │
+├─────────────────────────────────────┤
+│ • User Management Functions         │
+│ • Medication CRUD Functions         │
+│ • Interaction Analysis Functions    │
+│ • OCR Processing Functions          │
+│ • Alert Trigger Functions           │
+│ • Report Generation Functions       │
+└─────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────┐
+│           Google Cloud Services     │
+├─────────────────────────────────────┤
+│ • Firestore Database               │
+│ • Firebase Storage                  │
+│ • Vertex AI (NLP/ML)               │
+│ • Cloud Vision API (OCR)           │
+│ • Cloud Scheduler (Alerts)         │
+│ • n8n on Cloud Run (API Workflows) │
+└─────────────────────────────────────┘
+```
+
+### Data Flow Architecture
+```
+User Input → OCR/Manual Entry → NLP Processing → Medical API Query → 
+Interaction Analysis → Alert Generation → Report Creation
+```
+
+## Development Phases
+
+### Phase 1: Foundation
+- [ ] Set up development environment and project structure
+- [ ] Configure Firebase project and GCP services
+- [ ] Implement basic React Native app with navigation
+- [ ] Set up Firebase Authentication and Firestore
+- [ ] Configure medium phone emulator for testing
+- [ ] Set up n8n on Google Cloud Run with basic workflows
+
+### Phase 2: Core Features 
+- [ ] Develop medication management with Firestore CRUD operations
+- [ ] Integrate Google Cloud Vision API for prescription OCR scanning
+- [ ] Implement basic interaction checking with medical APIs via n8n
+- [ ] Create user profile management with Firebase Auth
+- [ ] Develop Firebase Cloud Messaging for push notifications
+- [ ] Set up Firestore offline persistence and caching
+
+### Phase 3: AI Integration
+- [ ] Integrate Vertex AI PaLM 2 for natural language processing
+- [ ] Implement Vertex AI Vector Search for semantic search
+- [ ] Enhance OCR with Vertex AI text correction and validation
+- [ ] Develop intelligent alert prioritization using ML models
+- [ ] Create AI-powered interaction explanations with Vertex AI
+
+### Phase 4: Advanced Features 
+- [ ] Implement personalized alert system
+- [ ] Develop comprehensive report generation
+- [ ] Add medication reminder functionality
+- [ ] Implement offline mode capabilities
+- [ ] Create advanced analytics dashboard
+
+### Phase 5: Testing & Deployment 
+- [ ] Comprehensive testing (unit, integration, e2e)
+- [ ] Security audit and penetration testing
+- [ ] Performance optimization
+- [ ] App store preparation and submission
+- [ ] Production deployment and monitoring setup
+
+## Firestore Database Schema
+
+### Core Collections
+```javascript
+// Users collection
+users/{userId} {
+  email: string,
+  profile: {
+    firstName: string,
+    lastName: string,
+    dateOfBirth: timestamp,
+    allergies: array,
+    medicalConditions: array
+  },
+  preferences: {
+    notifications: boolean,
+    alertFrequency: string
+  },
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
+
+// Medications subcollection
+users/{userId}/medications/{medicationId} {
+  name: string,
+  dosage: string,
+  frequency: string,
+  ndcCode: string,
+  rxnormId: string,
+  isActive: boolean,
+  prescribedBy: string,
+  startDate: timestamp,
+  endDate: timestamp,
+  createdAt: timestamp
+}
+
+// Supplements subcollection
+users/{userId}/supplements/{supplementId} {
+  name: string,
+  dosage: string,
+  frequency: string,
+  category: string,
+  brand: string,
+  isActive: boolean,
+  startDate: timestamp,
+  createdAt: timestamp
+}
+
+// Interactions collection (global)
+interactions/{interactionId} {
+  medicationId: string,
+  supplementId: string,
+  medicationName: string,
+  supplementName: string,
+  severityLevel: string, // low, medium, high, critical
+  description: string,
+  recommendation: string,
+  source: string,
+  lastUpdated: timestamp
+}
+
+// User-specific alerts subcollection
+users/{userId}/alerts/{alertId} {
+  interactionId: string,
+  alertType: string,
+  message: string,
+  severityLevel: string,
+  isRead: boolean,
+  isAcknowledged: boolean,
+  createdAt: timestamp,
+  readAt: timestamp
+}
+
+// OCR processing results (temporary storage)
+ocrResults/{sessionId} {
+  userId: string,
+  imageUrl: string,
+  extractedText: string,
+  processedMedications: array,
+  confidence: number,
+  status: string, // processing, completed, failed
+  createdAt: timestamp,
+  expiresAt: timestamp
+}
+```
+
+## API Integrations
+
+### Medical APIs
+- **FDA Orange Book API**: Drug approval and generic information
+- **RxNorm API**: Standardized medication names and codes
+- **NIH DailyMed API**: Medication labeling and interaction data
+- **OpenFDA API**: Adverse event reporting and drug information
+
+### n8n Workflow Examples (on Google Cloud Run)
+```javascript
+// Drug Interaction Check Workflow
+1. Receive medication list from Firebase Cloud Function
+2. Normalize drug names using RxNorm API
+3. Query FDA API for interaction data
+4. Cross-reference with NIH database
+5. Process results with Vertex AI for severity analysis
+6. Store results in Firestore
+7. Trigger Firebase Cloud Messaging for high severity alerts
+8. Update user's alert subcollection in real-time
+
+// OCR Processing Workflow
+1. Receive image from Firebase Storage trigger
+2. Process image with Google Cloud Vision API
+3. Extract medication names and dosages
+4. Validate results with Vertex AI text processing
+5. Store processed data in Firestore
+6. Notify mobile app via real-time listeners
+```
+
+## Security & Compliance
+
+### Data Protection
+- End-to-end encryption for sensitive health data
+- HIPAA-compliant data handling procedures with Firebase Security Rules
+- Regular security audits and penetration testing
+- Secure API key management with Google Secret Manager
+- Firebase App Check for app attestation and protection
+
+### Privacy Measures
+- Minimal data collection principle
+- User consent management
+- Data anonymization for analytics
+- Right to data deletion (GDPR compliance)
+
+## Testing Strategy
+
+### Mobile App Testing
+- Unit tests with Jest and React Native Testing Library
+- Integration tests for API interactions
+- E2E tests with Detox
+- Device-specific testing on iOS and Android
+
+### Backend Testing
+- Unit tests with Jest
+- Integration tests for database operations
+- API endpoint testing with Supertest
+- Load testing with Artillery.js
+
+### Medical Accuracy Testing
+- Validation against known drug interaction databases
+- Healthcare professional review process
+- Continuous monitoring of API data accuracy
+
+## Deployment Strategy
+
+### Mobile App Deployment
+- **iOS**: App Store Connect with TestFlight for beta testing
+- **Android**: Google Play Console with internal testing track
+- Automated builds with Fastlane
+- Code signing and certificate management
+
+### Backend Deployment
+- Firebase Cloud Functions for serverless backend
+- n8n deployment on Google Cloud Run with auto-scaling
+- Google Cloud Build for CI/CD pipelines
+- Automated rollback capabilities with Cloud Build triggers
+- Firebase Hosting for web dashboard (optional)
+
+## Monitoring & Analytics
+
+### Application Monitoring
+- Firebase Crashlytics for crash reporting and performance monitoring
+- Google Cloud Monitoring for infrastructure and function monitoring
+- Firebase Performance Monitoring for app performance insights
+- Google Analytics 4 for user engagement and behavior analytics
+- Custom dashboards in Google Cloud Console for medical API response times
+
+### Health Checks
+- Firebase Cloud Functions health monitoring
+- Firestore connection and performance monitoring
+- Third-party medical API availability checks via Cloud Monitoring
+- Automated alerting for system failures with Cloud Alerting
+- n8n workflow monitoring and error notifications
+
+## File Structure
+```
+SmartMed/
+├── mobile/                 # React Native mobile app
+│   ├── src/
+│   │   ├── components/     # Reusable UI components
+│   │   ├── screens/        # App screens
+│   │   ├── services/       # Firebase services and utilities
+│   │   ├── store/          # Redux store configuration
+│   │   ├── hooks/          # Custom React hooks for Firebase
+│   │   └── utils/          # Helper functions
+│   ├── android/            # Android-specific files
+│   ├── ios/                # iOS-specific files
+│   ├── __tests__/          # Test files
+│   ├── firebase.json       # Firebase configuration
+│   └── package.json
+├── functions/              # Firebase Cloud Functions
+│   ├── src/
+│   │   ├── controllers/    # Function controllers
+│   │   ├── services/       # Business logic services
+│   │   ├── utils/          # Helper functions
+│   │   └── types/          # TypeScript type definitions
+│   ├── package.json
+│   └── firebase.json
+├── firestore.rules         # Firestore security rules
+├── storage.rules           # Firebase Storage security rules
+├── n8n-workflows/          # n8n workflow definitions (JSON)
+├── gcp-config/             # Google Cloud Platform configurations
+│   ├── cloud-run/          # Cloud Run service configs
+│   ├── vertex-ai/          # Vertex AI model configs
+│   └── monitoring/         # Monitoring and alerting configs
+├── docs/                   # Project documentation
+├── scripts/                # Deployment and utility scripts
+├── .env.example            # Environment variables template
+└── firebase.json           # Firebase project configuration
+```
+
+## Development Guidelines
+
+### Medium Phone Emulator Configuration
+- **Primary Testing Device**: Android Medium Phone (API 34, 6.0" 1080x2340)
+- **Screen Density**: 420 dpi (xxhdpi)
+- **RAM**: 4GB minimum for optimal Firebase performance
+- **Storage**: 8GB for app data and offline capabilities
+- **Additional Test Devices**: 
+  - iPhone 14 (6.1" 1170x2532) for iOS testing
+  - Pixel 6 (6.4" 1080x2400) for Android edge cases
+
+### Firebase Emulator Suite Setup
+```bash
+# Install Firebase CLI and emulators
+npm install -g firebase-tools
+firebase init emulators
+
+# Configure emulators for local development
+firebase emulators:start --only firestore,auth,functions,storage
+
+# Run React Native with Firebase emulators
+cd mobile && npx react-native run-android --variant=debug
+```
+
+### Code Standards
+- ESLint and Prettier for code formatting
+- TypeScript for type safety across Firebase functions and mobile app
+- Conventional commits for version control
+- Code review requirements for all PRs
+- Firebase Security Rules testing with emulator suite
+
+### Performance Optimization
+- Image optimization and lazy loading
+- API response caching strategies
+- Database query optimization
+- Mobile app bundle size optimization
+
+### Error Handling
+- Comprehensive error logging
+- User-friendly error messages
+- Graceful degradation for API failures
+- Offline mode capabilities
+
+## Regulatory Considerations
+
+### Medical Device Classification
+- Determine FDA classification requirements
+- Implement quality management system
+- Document clinical validation processes
+- Maintain audit trails for regulatory compliance
+
+### International Compliance
+- GDPR compliance for European users
+- Health Canada regulations for Canadian market
+- Local data residency requirements
+- Multi-language support for global deployment
+
+## Success Metrics
+
+### User Engagement
+- Daily/Monthly Active Users (DAU/MAU)
+- Session duration and frequency
+- Feature adoption rates
+- User retention rates
+
+### Medical Accuracy
+- Interaction detection accuracy rate
+- False positive/negative rates
+- Healthcare professional feedback scores
+- User-reported accuracy issues
+
+### Business Metrics
+- App store ratings and reviews
+- User acquisition cost
+- Revenue per user (if monetized)
+- Customer support ticket volume
+
+## Future Enhancements
+
+### Advanced Features
+- Integration with electronic health records (EHR)
+- Telemedicine consultation booking
+- Medication adherence tracking
+- AI-powered health insights
+
+### Platform Expansion
+- Web application development
+- Smart watch integration
+- Voice assistant integration
+- Healthcare provider dashboard
+
+This .cursorrules file serves as the comprehensive guide for the SmartMed project, ensuring all future development aligns with the established architecture and standards.

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "28334185827",
+    "project_id": "smartmed-473701",
+    "storage_bucket": "smartmed-473701.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:28334185827:android:070486e23d110ec78fc756",
+        "android_client_info": {
+          "package_name": "com.Sid.SmartMed"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-1h095JEv60T098g9vtkjiarro-8dQO4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

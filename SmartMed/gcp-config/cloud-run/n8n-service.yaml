@@ -1,0 +1,82 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: smartmed-n8n
+  namespace: default
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "3"
+        run.googleapis.com/cpu-throttling: "false"
+        run.googleapis.com/startup-cpu-boost: "true"
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 300
+      serviceAccountName: smartmed-n8n@smartmed-dev.iam.gserviceaccount.com
+      containers:
+      - image: n8nio/n8n:latest
+        ports:
+        - name: http1
+          containerPort: 5678
+        env:
+        - name: N8N_HOST
+          value: "0.0.0.0"
+        - name: N8N_PORT
+          value: "5678"
+        - name: N8N_PROTOCOL
+          value: "https"
+        - name: NODE_ENV
+          value: "production"
+        - name: WEBHOOK_URL
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: webhook-url
+        - name: N8N_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: encryption-key
+        - name: DB_TYPE
+          value: "postgresdb"
+        - name: DB_POSTGRESDB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: db-host
+        - name: DB_POSTGRESDB_PORT
+          value: "5432"
+        - name: DB_POSTGRESDB_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: db-name
+        - name: DB_POSTGRESDB_USER
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: db-user
+        - name: DB_POSTGRESDB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: db-password
+        - name: N8N_LOG_LEVEL
+          value: "info"
+        - name: N8N_LOG_OUTPUT
+          value: "console"
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "2Gi"
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+  traffic:
+  - percent: 100
+    latestRevision: true

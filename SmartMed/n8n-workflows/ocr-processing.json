@@ -1,0 +1,139 @@
+{
+  "name": "OCR Processing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ocr-process",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "imageUrl",
+              "value": "={{ $json.imageUrl }}"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $json.userId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-data",
+      "name": "Set OCR Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const imageUrl = items[0].json.imageUrl;\nconst userId = items[0].json.userId;\n\n// Process image with Google Cloud Vision API\ntry {\n  const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${process.env.GOOGLE_CLOUD_VISION_API_KEY}`, {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({\n      requests: [{\n        image: { source: { imageUri: imageUrl } },\n        features: [\n          { type: 'TEXT_DETECTION', maxResults: 50 },\n          { type: 'DOCUMENT_TEXT_DETECTION', maxResults: 50 }\n        ]\n      }]\n    })\n  });\n  \n  const data = await response.json();\n  const extractedText = data.responses[0]?.textAnnotations?.[0]?.description || '';\n  \n  return [{ json: { extractedText, imageUrl, userId } }];\n} catch (error) {\n  console.error('Error in OCR processing:', error);\n  throw error;\n}"
+      },
+      "id": "google-vision-ocr",
+      "name": "Google Vision OCR",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const extractedText = items[0].json.extractedText;\nconst userId = items[0].json.userId;\n\n// Process extracted text with Vertex AI for medication recognition\n// This would use Google Cloud Vertex AI for better text understanding\nconst medications = [];\n\n// Simple text parsing for medication names (in production, use AI)\nconst lines = extractedText.split('\\n');\nfor (const line of lines) {\n  // Look for patterns that might indicate medication names\n  if (line.length > 3 && line.length < 50) {\n    // Check if it contains common medication indicators\n    if (/\\b(mg|g|ml|tablet|capsule|injection)\\b/i.test(line)) {\n      medications.push({\n        name: line.trim(),\n        confidence: 0.8,\n        source: 'OCR'\n      });\n    }\n  }\n}\n\nreturn [{ json: { medications, extractedText, userId } }];"
+      },
+      "id": "process-text",
+      "name": "Process Text",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const medications = items[0].json.medications || [];\nconst userId = items[0].json.userId;\n\n// Validate medications using RxNorm API\nconst validatedMedications = [];\n\nfor (const med of medications) {\n  try {\n    const response = await fetch(`https://rxnav.nlm.nih.gov/REST/drugs.json?name=${encodeURIComponent(med.name)}`);\n    const data = await response.json();\n    \n    if (data?.drugGroup?.conceptGroup) {\n      const concept = data.drugGroup.conceptGroup[0];\n      validatedMedications.push({\n        ...med,\n        rxnormId: concept.conceptProperties?.[0]?.rxcui,\n        confidence: med.confidence,\n        validated: true\n      });\n    } else {\n      validatedMedications.push({\n        ...med,\n        validated: false\n      });\n    }\n  } catch (error) {\n    console.error('Error validating medication:', med.name, error);\n    validatedMedications.push({\n      ...med,\n      validated: false\n    });\n  }\n}\n\nreturn [{ json: { validatedMedications, userId } }];"
+      },
+      "id": "validate-medications",
+      "name": "Validate Medications",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const validatedMedications = items[0].json.validatedMedications || [];\nconst userId = items[0].json.userId;\n\n// Store OCR results in Firestore\ntry {\n  const response = await fetch('https://us-central1-smartmed-dev.cloudfunctions.net/storeOCRResult', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({\n      userId,\n      extractedText: items[0].json.extractedText,\n      medications: validatedMedications,\n      confidence: validatedMedications.length > 0 ? 0.8 : 0.3,\n      status: 'completed'\n    })\n  });\n  \n  if (response.ok) {\n    return [{ json: { success: true, validatedMedications } }];\n  } else {\n    throw new Error('Failed to store OCR result');\n  }\n} catch (error) {\n  console.error('Error storing OCR result:', error);\n  return [{ json: { success: false, error: error.message } }];\n}"
+      },
+      "id": "store-ocr-results",
+      "name": "Store OCR Results",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set OCR Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set OCR Data": {
+      "main": [
+        [
+          {
+            "node": "Google Vision OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Vision OCR": {
+      "main": [
+        [
+          {
+            "node": "Process Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Text": {
+      "main": [
+        [
+          {
+            "node": "Validate Medications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Medications": {
+      "main": [
+        [
+          {
+            "node": "Store OCR Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null
+}

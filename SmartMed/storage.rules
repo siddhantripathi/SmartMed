@@ -1,0 +1,42 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*') &&
+             request.resource.size < 10 * 1024 * 1024; // 10MB limit
+    }
+
+    // User-specific images (medication labels, supplement bottles)
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if isOwner(userId) && isValidImage();
+      allow delete: if isOwner(userId);
+    }
+
+    // OCR processing images (temporary)
+    match /ocr-processing/{sessionId}/{allPaths=**} {
+      allow read, write: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // Medical reports and exports
+    match /reports/{userId}/{allPaths=**} {
+      allow read, write: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    // Global medical images (admin only)
+    match /medical-library/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if request.auth.token.admin == true;
+    }
+  }
+}

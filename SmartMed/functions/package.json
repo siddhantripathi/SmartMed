@@ -1,0 +1,50 @@
+{
+  "name": "smartmed-functions",
+  "version": "1.0.0",
+  "description": "Firebase Cloud Functions for SmartMed",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log",
+    "lint": "eslint src/**/*.ts",
+    "test": "jest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "firebase-admin": "^11.11.1",
+    "firebase-functions": "^4.5.0",
+    "axios": "^1.6.0",
+    "sharp": "^0.33.0",
+    "lodash": "^4.17.21",
+    "uuid": "^9.0.1",
+    "google-auth-library": "^9.2.0",
+    "@google-cloud/vision": "^4.0.2",
+    "@google-cloud/storage": "^7.6.0",
+    "@google-cloud/firestore": "^7.1.0",
+    "@google-cloud/functions-framework": "^3.3.0",
+    "n8n-workflow": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.200",
+    "@types/sharp": "^0.32.0",
+    "@types/uuid": "^9.0.7",
+    "@typescript-eslint/eslint-plugin": "^6.9.1",
+    "@typescript-eslint/parser": "^6.9.1",
+    "eslint": "^8.52.0",
+    "eslint-plugin-import": "^2.29.0",
+    "firebase-functions-test": "^3.1.0",
+    "jest": "^29.7.0",
+    "typescript": "^5.2.2",
+    "ts-jest": "^29.1.1",
+    "prettier": "^3.0.3",
+    "@types/jest": "^29.5.8"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "private": true
+}
